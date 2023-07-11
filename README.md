@@ -41,6 +41,7 @@ You can review what happened in batch.log.
 # Output
 
 Here's some sample output using Greg's video:
+
 Speech to text...
 
 Transcribed in 3.11 mins
