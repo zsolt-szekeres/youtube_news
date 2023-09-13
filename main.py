@@ -5,6 +5,7 @@ import myshare
 import time
 import llms
 import pickle
+import config
 
 import speech2text as s2t
 
@@ -14,10 +15,13 @@ if __name__ == '__main__':
     ws = s2t.ws() 
     yt_link = st.text_input('Youtube link')
     pickle_link = st.text_input('Path to previous dump (pickle file). This will only be used when above youtube link if left blank.')
-    simple_prompt = st.text_area(label = 'Simple prompt (without map reduce) used when prompt is short',value = llms.SIMPLE_PROMPT)
+    #simple_prompt = st.text_area(label = 'Simple prompt (without map reduce) used when prompt is short',value = llms.SIMPLE_PROMPT)
+    simple_prompt = st.text_area(label = 'Simple prompt (without map reduce) used when prompt is short',value = config.params['gpt_prompts']['simple_prompt'])
     st.markdown("Using lvl 3 summary by Greg at http://www.youtube.com/watch?v=qaPMdcCqtWk")
-    map_prompt = st.text_area(label = 'MAP prompt',value = llms.MAP_PROMPT)
-    combine_prompt = st.text_area(label = 'COMBINE prompt',value = llms.COMBINE_PROMPT)
+    #map_prompt = st.text_area(label = 'MAP prompt',value = llms.MAP_PROMPT)
+    map_prompt = st.text_area(label = 'MAP prompt',value = config.params['gpt_prompts']['map_prompt'])
+    #combine_prompt = st.text_area(label = 'COMBINE prompt',value = llms.COMBINE_PROMPT)
+    combine_prompt = st.text_area(label = 'COMBINE prompt',value = config.params['gpt_prompts']['combine_prompt'])
     chunk_size = st.text_input(label='Chunk size',value=3600)
     overlap = st.text_input(label='Overlap', value=100)
     email_send = st.checkbox("Send me an email with the summary")
@@ -62,7 +66,8 @@ if __name__ == '__main__':
 
         # Send the email
         if email_send:
-            myshare.send_email(output, info['title'], yt_link)
+            #myshare.send_email(output, info['title'], yt_link)
+            myshare.send_email(output, info)
 
         data = (output, response, info, fname)
         with open(fname+'_sum.p', "wb") as file:

@@ -1,47 +1,47 @@
+import config
+
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import os
+from email.mime.base import MIMEBase
+from email import encoders
 
-def send_email(message, subject_spec, yt_link=None):
+def send_email(message, info): 
     
-    # Set the sender's and receiver's email addresses
-    sender_email = os.getenv("GMAIL_EMAIL")
-    receiver_email = os.getenv("GMAIL_EMAIL")
-
-    # Set the password for your email account (generated app password for two-factor authentication)
-    password = os.getenv("GMAIL_TWOFACTOR")
-
-    # Set the subject and message for the email
-    subject = "[Youtube insights] - " + subject_spec
-    
-    # Set up the SMTP server
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-
-    # Create a secure connection to the SMTP server
-    server = smtplib.SMTP(smtp_server, smtp_port)
+    # Config sending email 
+    SENDER_EMAIL = config.params['email']['sender_email']     
+    RECEIVER_EMAILS = config.params['email']['receiver_emails']    
+    server = smtplib.SMTP("smtp.gmail.com", 587)
     server.starttls()
-
-    # Log in to the sender's email account
-    server.login(sender_email, password)
-
-    # Create a multipart message and set the headers
+    server.login(SENDER_EMAIL, config.params['auth_codes']['GMAIL_two_factor_password'])
+    
+    # Config email content
+    subject = "[Youtube insights] - " + info['title']
     msg = MIMEMultipart()
-    msg["From"] = sender_email
-    msg["To"] = receiver_email
+    msg["From"] = SENDER_EMAIL
+    msg["To"] = ", ".join(RECEIVER_EMAILS)
     msg["Subject"] = subject
+    #'<p> View count: '+info['view_count']+"</p>" + \
+    try:
+        message = '<p> <a href="'+info['webpage_url']+'">'+info['webpage_url'] +'</a></p>' \
+            '<p> Duration: '+info['duration_string']+"</p>" + \
+                message        
+    except:
+        print ('No youtube link')
+ 
 
-    # Attach the message to the email
-    if yt_link:
-        message = '<p> <a href="'+yt_link+'">'+yt_link +'</a> </p>' + message
     message = "<html>"+message+"</html>"
     msg.attach(MIMEText(message, "html"))
 
-    # Send the email
-    server.sendmail(sender_email, receiver_email, msg.as_string())
+    # Attach config
+    with open('config.json', 'rb') as attachment:
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload(attachment.read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', f"attachment; filename= {'config.json'}")
+        msg.attach(part)    
 
-    # Close the SMTP server connection
+    server.sendmail(SENDER_EMAIL, RECEIVER_EMAILS, msg.as_string())
     server.quit()
 
 

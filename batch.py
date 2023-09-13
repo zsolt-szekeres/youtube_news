@@ -1,58 +1,57 @@
 import logging
-import scrapetube
 import youtube_parser as yp
-from datetime import datetime, timedelta
 import myshare
 import speech2text as s2t
 import llms
-import pandas as pd
+import pickle
 
-logging.basicConfig(
+import config
+
+
+if __name__ == '__main__': 
+
+    #Set up logging    
+    logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     filename='batch.log',
     filemode='w'
-)
+    )
+    logger = logging.getLogger()
 
-logger = logging.getLogger()
+    ws = s2t.ws() # initialize speech to text model
 
-def is_recent(date_string):
-    # Convert the string to a datetime object
-    date_format = '%Y%m%d'
-    date = datetime.strptime(date_string, date_format)
-    
-    # Calculate the time difference between the current date and the given date
-    time_difference = datetime.now() - date
-    time_limit = timedelta(days=2)
+    channel_ids = [item['id'] for item in config.params['youtube_channels']]
+     
 
-    return (time_difference < time_limit)
-    
-channel_urls = pd.read_csv('channels.csv')['channels'].tolist()
-
-ws = s2t.ws() 
-for channel_url in channel_urls:
-    videos = list(scrapetube.get_channel(channel_url=channel_url,sort_by='newest'))
-    for v in videos[:2]:        
-        # Get only the two most recent videos from each channel        
-        logger.info(channel_url+' _ '+v['videoId']) 
-        try:
-            # Handle exceptions to make sure a single hickup doesn't prevents other videos to be summarized
-            url = 'https://www.youtube.com/watch?v='+v['videoId']
-            fn,format, info_dict = yp.get_video(url, format='mp3', download=False)    
-            print (is_recent(info_dict['upload_date']))
-            if (is_recent(info_dict['upload_date'])):      
-                logger.info(info_dict['channel']+' | '+ v['title']['runs'][0]['text']+' | '+info_dict['upload_date'])       
-                print ( info_dict['channel'],' | ', v['title']['runs'][0]['text'], ' | ',info_dict['upload_date'])            
-                #msg.append(info_dict['channel']+' | '+v['title']['runs'][0]['text']+' | '+info_dict['upload_date'])
-                fname, format, info = yp.get_video('https://www.youtube.com/watch?v='+v['videoId'], format='mp3')
-                print (f"Duration: {info['duration_string']}")
-                response = ws.transcribe(fname+'.'+format)
-                ntokens = llms.get_num_tokens(response['text'])
-                print(f'This has  {ntokens} tokens')
-                output, chunk_size, overlap = llms.get_bullets([response['text']], ntokens)
-                myshare.send_email(output, info['title'], url)
-                logger.info('email sent')
-            else:
-                break   
-        except:
+    for channel_id in channel_ids:    
+        try:        
+            video_ids = yp.get_videos_from_channel(channel_id,2)                                   
+            for v in video_ids[:2]:                
+                logger.info(channel_id+' _ '+v) 
+                try:
+                    url = 'https://www.youtube.com/watch?v='+v
+                    fn,format, info = yp.get_video(url, format='mp3', download=False)    
+                    logger.debug(yp.is_recent(info['upload_date']))
+                    if (yp.is_recent(info['upload_date'])):                          
+                        logger.debug ( info['channel'],' | ', info['title'], ' | ',info['upload_date'])            
+                        fname, format, info = yp.get_video('https://www.youtube.com/watch?v='+v, format='mp3')
+                        logger.debug (f"Duration: {info['duration_string']}")
+                        response = ws.transcribe(fname+'.'+format)
+                        ntokens = llms.get_num_tokens(response['text'])
+                        logger.debug(f'This has  {ntokens} tokens')
+                        output, chunk_size, overlap = llms.get_bullets([response['text']], ntokens)                    
+                        myshare.send_email(output, info)
+                        logger.info('email sent')
+                        data = (output, response, info, fname)
+                        with open(fname+'_sum.p', "wb") as file:
+                            pickle.dump(data, file)
+                    else:
+                        break   
+                except Exception as e:            
+                    logger.info("An exception occurred while sending the email: {}".format(str(e)))
+                    continue
+        except Exception as e2:        
+            logger.info("An exception occurred with the channel: {}".format(str(channel_id)))
+            logger.info("Details: {}".format(str(e2)))
             continue
