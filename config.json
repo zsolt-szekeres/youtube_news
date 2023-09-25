@@ -5,18 +5,22 @@
 		{"id": "UCwD5YYkbYmN2iFHON9FyDXg", "descriptor": "David Sinclair"},
 		{"id": "UC2D2CMWXMOVWx7giW1n3LIg", "descriptor": "Huberman"},
 		{"id": "UCAuUUnT6oDeKwE6v1NGQxug", "descriptor": "TED"},
-		{"id": "UCyR2Ct3pDOeZSRyZH5hPO-Q", "descriptor": "Data Independent"}
+		{"id": "UCyR2Ct3pDOeZSRyZH5hPO-Q", "descriptor": "Data Independent"},
+		{"id": "UCvKRFNawVcuz4b9ihUTApCg", "descriptor": "4IR with David Shapiro"}
     ],
-    "gpt_prompts": {
+    "gpt": {
+        "simple_model": "gpt-3.5-turbo",
+		"mapreduce_model": "gpt-3.5-turbo",		
         "simple_prompt": "Summarize the context provided by the user. Return your response in html as ordered list, which covers the key points of the text.",
         "map_prompt": " Write a concise summary of the following: '{text}' CONCISE SUMMARY:",
-        "combine_prompt": " Write a concise summary of the following text delimited by backquotes. Return your response in html as ordered list, which covers the key points of the text. '{text}' "
+        "combine_prompt": "Analyze the following text and extract the  most crucial points. Return your summary in HTML as an ordered list. '{text}' "
     },
     "chunking": {
-        "size": 3600,
-        "overlap": 100
+        "size": 6000,
+        "overlap": 300
     },
     "lookback_days": 2,    
+	"run_mode": "NORMAL", 
     "auth_codes_env_vars": {
         "Youtube_API_key": "YOUTUBE_API_KEY",
         "OpenAI_API_key": "OPENAI_API_KEY",
