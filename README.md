@@ -4,11 +4,13 @@ This tool does the following:
 * gets the audio of select youtube videos
 * generates a transcript via OpenAI whisper
 * summarizes them via a combination of OpenAI's GPT API and LangChain's map reduce approach introduced at https://www.youtube.com/watch?v=qaPMdcCqtWk
-* and finally sends the summary by email to you
+* sends the summary by email to you
+* allows to chat with the transcript of the video
 
- There are two entry points:
- * main.py offers an interactive UI via streamlit where you can pick a single youtube video and finetune prompts and other parameters
+ There are three entry points:
+ * main.py offers an interactive UI via streamlit where you can pick a single youtube video and configure prompts and other parameters
  * batch.py offers the opportunity to collect and process recent videos from your favorite channels and schedule this process say daily
+ * chat.py implements a RAG (Retrieval Augmented Generator) based on contexts identified by questions in a conversation 
 
 # Setup 
 * I started with Anaconda on Win 11 and have GPU support via pytorch+cuda for the transcription. Installed the few packages included at the top of the .py files. I included a full requirements.txt file for reference.
@@ -20,7 +22,7 @@ This tool does the following:
 Execute streamlit run main.py as usual go to the url shown. From here:
 * Either
   * provide a direct url to a youtube video OR
-  * provide the path to the pickle file generated in a previous step (This supports caching the output of previous runs.)
+  * provide the path to the folder created in a previous step (This supports caching the transcript from previous runs.)
 * You may wanna play with the prompts and the map reduce parameters chunk_size and overlap. This becomes handy when you work with the cached transcript and perform your sensitivity analysis.
 * The checkbox lets you decide if you wanna have the email or just wanna play on the UI
 * Pressing the button will run this thing and the UI will give you some details on the video before giving the summary.
