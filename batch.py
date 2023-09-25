@@ -1,10 +1,10 @@
 import logging
+
 import youtube_parser as yp
 import myshare
 import speech2text as s2t
 import llms
-import pickle
-
+import content
 import config
 
 
@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
     #Set up logging    
     logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG if config.params['run_mode']=='DEBUG' else logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     filename='batch.log',
     filemode='w'
@@ -22,7 +22,6 @@ if __name__ == '__main__':
     ws = s2t.ws() # initialize speech to text model
 
     channel_ids = [item['id'] for item in config.params['youtube_channels']]
-     
 
     for channel_id in channel_ids:    
         try:        
@@ -37,15 +36,16 @@ if __name__ == '__main__':
                         logger.debug ( info['channel'],' | ', info['title'], ' | ',info['upload_date'])            
                         fname, format, info = yp.get_video('https://www.youtube.com/watch?v='+v, format='mp3')
                         logger.debug (f"Duration: {info['duration_string']}")
-                        response = ws.transcribe(fname+'.'+format)
-                        ntokens = llms.get_num_tokens(response['text'])
+                        transcription = ws.transcribe(fname+'.'+format)
+                        ntokens = llms.get_num_tokens(transcription['text'])
                         logger.debug(f'This has  {ntokens} tokens')
-                        output, chunk_size, overlap = llms.get_bullets([response['text']], ntokens)                    
-                        myshare.send_email(output, info)
+                        summary, chunk_size, overlap = llms.get_summary([transcription['text']], ntokens)                    
+                        myshare.send_email(summary, info)
                         logger.info('email sent')
-                        data = (output, response, info, fname)
-                        with open(fname+'_sum.p', "wb") as file:
-                            pickle.dump(data, file)
+                        content.save_all(summary, transcription, info, fname)
+                        # data = (output, response, info, fname)
+                        # with open(fname+'_sum.p', "wb") as file:
+                        #     pickle.dump(data, file)
                     else:
                         break   
                 except Exception as e:            

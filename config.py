@@ -11,8 +11,8 @@ class _ConfigParser:
         return self.data['youtube_channels']
     
     @property
-    def gpt_prompts(self):
-        return self.data['gpt_prompts']
+    def gpt(self):
+        return self.data['gpt']
     
     @property
     def chunking_parameters(self):
@@ -23,6 +23,10 @@ class _ConfigParser:
         return self.data['lookback_days']
     
     @property
+    def run_mode(self):
+        return self.data['run_mode']
+    
+    @property
     def auth_codes(self):
         auth_codes = {}
         for key, env_var in self.data['auth_codes_env_vars'].items():
@@ -31,14 +35,17 @@ class _ConfigParser:
     
     @property
     def email(self):
+        if self.data['run_mode']=='DEBUG':
+            self.data['email']['receiver_emails']=[self.data['email']['sender_email']]
         return self.data['email']
-
+        
 _config_parser = _ConfigParser('config.json')
 params = {
     "youtube_channels": _config_parser.youtube_channels,
-    "gpt_prompts": _config_parser.gpt_prompts,
+    "gpt": _config_parser.gpt,
     "chunking": _config_parser.chunking_parameters,
     "lookback_days": _config_parser.lookback_days,
     "auth_codes": _config_parser.auth_codes,
-    "email": _config_parser.email
+    "email": _config_parser.email,
+    "run_mode": _config_parser.run_mode
 }

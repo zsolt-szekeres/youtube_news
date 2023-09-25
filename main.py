@@ -1,32 +1,35 @@
-import youtube_parser as yp
-import streamlit as st
-import myshare
-
 import time
-import llms
-import pickle
+import streamlit as st
+import youtube_parser as yp
+
 import config
 
+import myshare
+import llms
 import speech2text as s2t
+import content
 
 if __name__ == '__main__': 
 
-    st.markdown("*Loading model...*")
+    st.markdown("*Loading speech-to-text model...*")
     ws = s2t.ws() 
-    yt_link = st.text_input('Youtube link')
-    pickle_link = st.text_input('Path to previous dump (pickle file). This will only be used when above youtube link if left blank.')
-    #simple_prompt = st.text_area(label = 'Simple prompt (without map reduce) used when prompt is short',value = llms.SIMPLE_PROMPT)
-    simple_prompt = st.text_area(label = 'Simple prompt (without map reduce) used when prompt is short',value = config.params['gpt_prompts']['simple_prompt'])
-    st.markdown("Using lvl 3 summary by Greg at http://www.youtube.com/watch?v=qaPMdcCqtWk")
-    #map_prompt = st.text_area(label = 'MAP prompt',value = llms.MAP_PROMPT)
-    map_prompt = st.text_area(label = 'MAP prompt',value = config.params['gpt_prompts']['map_prompt'])
-    #combine_prompt = st.text_area(label = 'COMBINE prompt',value = llms.COMBINE_PROMPT)
-    combine_prompt = st.text_area(label = 'COMBINE prompt',value = config.params['gpt_prompts']['combine_prompt'])
-    chunk_size = st.text_input(label='Chunk size',value=3600)
-    overlap = st.text_input(label='Overlap', value=100)
-    email_send = st.checkbox("Send me an email with the summary")
-    button1 = st.button('Get video, convert and summarize')
-    
+
+    with st.sidebar:
+        st.header("Configuration")
+        yt_link = st.text_input('Youtube link')
+        cache_folder = st.text_input('Path to folder of the previous dump. This will only be used when above youtube link is left blank.')    
+        local_config={}
+        local_config['simple_prompt'] = st.text_area(label = 'Simple prompt (without map reduce) used when prompt is short',value = config.params['gpt']['simple_prompt'])        
+        local_config['map_prompt'] = st.text_area(label = 'MAP prompt',value = config.params['gpt']['map_prompt'])    
+        local_config['combine_prompt'] = st.text_area(label = 'COMBINE prompt',value = config.params['gpt']['combine_prompt'])
+        local_config['simple_model'] = st.selectbox('Select your simple model',('gpt-3.5-turbo','gpt-4'))
+        local_config['mapreduce_model'] = st.selectbox('Select your mapreduce model',('gpt-3.5-turbo','gpt-4'))    
+        local_config['chunk_size'] = st.text_input(label='Chunk size',value=config.params['chunking']['size'])
+        local_config['overlap'] = st.text_input(label='Overlap', value=config.params['chunking']['overlap'])
+        email_send = st.checkbox("Send me an email with the summary")
+        debug_mode = st.checkbox('Debug mode')
+
+    button1 = st.button('Get input and summarize')    
 
     if button1:        
 
@@ -41,37 +44,35 @@ if __name__ == '__main__':
 
             st.markdown("*Speech to text...*")
             start = time.time()
-            response = ws.transcribe(fname+'.'+format)
+            transcription = ws.transcribe(fname+'.'+format)
             end = time.time()
             st.write(f'Transcribed in  {round((end - start) / 60, 2)}  mins')
         else:
-            with open(pickle_link, "rb") as file:
-                (output, response, info, fname) = pickle.load(file)
+            transcription, info = content.get_transcript(cache_folder)
+            fname = str.split(cache_folder,'\\')[3]+'\\'+str.split(cache_folder,'\\')[4]+'\\'+str.split(cache_folder,'\\')[4]
 
-        ntokens = llms.get_num_tokens(response['text'])
+        if debug_mode:
+            config.params['email']['receiver_emails']=[config.params['email']['sender_email']]
+        ntokens = llms.get_num_tokens(transcription['text'])
         st.write(f'This has  {ntokens} tokens')
 
-        st.markdown("*Summarizing...*")
-        start = time.time()
-        output, chunk_size, overlap = \
-            llms.get_bullets([response['text']], ntokens, map_prompt=map_prompt, \
-                             combine_prompt=combine_prompt, chunk_size=int(chunk_size), overlap=int(overlap))
-        st.write('chunk size='+str(chunk_size)+' , overlap='+str(overlap))
-        st.write('<html>'+output+'</html>', unsafe_allow_html=True)
-        end = time.time()
-        st.write(f'Summarized in  {round((end - start) / 60, 2)}  mins')
-
-        with open(fname+'.html', "w") as f:
-            f.write(output)
+        with st.spinner("Summarizing..."):
+            st.markdown("*Summarizing...*")
+            start = time.time()
+            summary, chunk_size, overlap = \
+                llms.get_summary([transcription['text']], ntokens, local_config)
+            docs_search, context = llms.get_context_for_bot('what is knowledge', [transcription['text']], local_config)
+            a=1
+            st.write('chunk size='+str(chunk_size)+' , overlap='+str(overlap))
+            st.write('<html>'+summary+'</html>', unsafe_allow_html=True)
+            end = time.time()
+            st.write(f'Summarized in  {round((end - start) / 60, 2)}  mins')
 
         # Send the email
-        if email_send:
-            #myshare.send_email(output, info['title'], yt_link)
-            myshare.send_email(output, info)
+        if email_send:                        
+            myshare.send_email(summary, info)
 
-        data = (output, response, info, fname)
-        with open(fname+'_sum.p', "wb") as file:
-            pickle.dump(data, file)
+        content.save_all(summary, transcription, info, fname, local_config)        
        
 
 
