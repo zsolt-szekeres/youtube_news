@@ -14,7 +14,7 @@ This tool does the following:
 
 # Setup 
 * I started with Anaconda on Win 11 and have GPU support via pytorch+cuda for the transcription. Installed the few packages included at the top of the .py files. I included a full requirements.txt file for reference.
-* I set up Gmail's two factor authentication to help send automated emails (google it)
+* I set up Gmail's two factor authentication to help send automated emails. Also set up the Youtube API and the OpenAI API.
 * All config sits in config.json. The auth_code_env_vars section points to a list of environmental variables which store API keys and the Gmail two-factor pwd.
  
 # Run the Interactive Version
