@@ -35,7 +35,7 @@ if __name__ == '__main__':
     openai.api_key = config.params['auth_codes']['OpenAI_API_key']
 
     if "openai_model" not in st.session_state:
-        st.session_state["openai_model"] = "gpt-3.5-turbo"
+        st.session_state["openai_model"] = "gpt-3.5-turbo-16k"
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -52,7 +52,7 @@ if __name__ == '__main__':
         prompt = 'Answer the question based on the '+context_num +' contexts after the question, and our prior conversation history (if we have one). \n'+\
             'QUESTION: '+prompt
         for i in range(int(context_num)):
-            prompt = prompt + '\n CONTEXT'+str(i+1)+': '+context[i]
+            prompt = prompt + '\n CONTEXT'+str(i+1)+': '+str(context[i])
         
         st.session_state.messages.append({"role": "user", "content": prompt})
         
@@ -79,5 +79,5 @@ if __name__ == '__main__':
                  json.dump(st.session_state.messages, json_file, indent=4)
         except:
             with st.chat_message("assitant"):
-                st.markdown('I am stuck. This conversations likely went beyond max tokens. Start a new conversation?')
+                st.markdown('I am stuck. This conversation likely went beyond max tokens. Start a new conversation?')
 

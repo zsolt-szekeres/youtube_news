@@ -3,13 +3,16 @@ import config
 from langchain.chat_models import ChatOpenAI as LChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.summarize import load_summarize_chain
-from langchain import PromptTemplate
+#from langchain import PromptTemplate
+from langchain.prompts import PromptTemplate
 from langchain.schema import (
     HumanMessage,
     SystemMessage
 )
 # Note this: https://github.com/kyamagu/faiss-wheels/issues/39
-from langchain.vectorstores import FAISS
+#from langchain.vectorstores import FAISS
+import chromadb
+from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
 
 # Initialization
@@ -49,12 +52,16 @@ def get_context_for_bot(query, text, local_config=None, context_num=3,context_le
     text_splitter_search = RecursiveCharacterTextSplitter(chunk_size=context_len, \
                                 chunk_overlap=context_overlap)    
     docs_search = text_splitter_search.create_documents(text)
-    vector_store = FAISS.from_documents(docs_search, OpenAIEmbeddings())
 
-    docsNscores=vector_store.similarity_search_with_score(query, context_num)
-    docs = [t[0] for t in docsNscores]
-    distances = [t[1] for t in docsNscores]
-    context = [d.page_content for d in docs]
+    vector_store = Chroma.from_documents(docs_search, OpenAIEmbeddings())
+    context = vector_store.max_marginal_relevance_search(query, k=context_num, fetch_k=context_num)
+
+    #vector_store = FAISS.from_documents(docs_search, OpenAIEmbeddings())
+
+    # docsNscores=vector_store.similarity_search_with_score(query, context_num)
+    # docs = [t[0] for t in docsNscores]
+    # distances = [t[1] for t in docsNscores]
+    # context = [d.page_content for d in docs]
 
     return docs_search, context
 
@@ -71,7 +78,7 @@ def get_summary(text, ntokens, local_config=None):
             res=llm4([SystemMessage(content=simple_prompt),\
                        HumanMessage(content=text[0])])
 
-        return (res.content, 0, 0, None, None)
+        return (res.content, 0, 0)
 
     # This splitting is deterministic, however, 
     # 1) not splitting within sentences may distort the  meaning of the first partial 

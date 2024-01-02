@@ -27,6 +27,15 @@ class _ConfigParser:
         return self.data['run_mode']
     
     @property
+    def backup_folder(self):
+        return self.data['backup_folder']
+    
+    @property
+    def vector_store(self):
+        return self.data['vector_store']
+    
+    
+    @property
     def auth_codes(self):
         auth_codes = {}
         for key, env_var in self.data['auth_codes_env_vars'].items():
@@ -47,5 +56,7 @@ params = {
     "lookback_days": _config_parser.lookback_days,
     "auth_codes": _config_parser.auth_codes,
     "email": _config_parser.email,
-    "run_mode": _config_parser.run_mode
+    "run_mode": _config_parser.run_mode,
+    "backup_folder": _config_parser.backup_folder,
+    "vector_store": _config_parser.vector_store
 }

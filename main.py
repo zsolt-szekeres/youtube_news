@@ -9,8 +9,14 @@ import llms
 import speech2text as s2t
 import content
 
+from media_downloader import MediaDownloader
+from distutils.dir_util import copy_tree
+import os
+
+
 if __name__ == '__main__': 
 
+    media_downloader = MediaDownloader(config)
     st.markdown("*Loading speech-to-text model...*")
     ws = s2t.ws() 
 
@@ -36,6 +42,7 @@ if __name__ == '__main__':
         if yt_link:
             start = time.time()
             fname, format, info = yp.get_video (yt_link)
+            #fname, format, info = media_downloader._get_audio_from_youtube(yt_link)
             end = time.time()
 
             st.write(f'Downloaded {fname+"."+format} in  {round((end - start) / 60, 2)}  mins')
@@ -61,8 +68,7 @@ if __name__ == '__main__':
             start = time.time()
             summary, chunk_size, overlap = \
                 llms.get_summary([transcription['text']], ntokens, local_config)
-            docs_search, context = llms.get_context_for_bot('what is knowledge', [transcription['text']], local_config)
-            a=1
+            # docs_search, context = llms.get_context_for_bot('what is knowledge', [transcription['text']], local_config)            
             st.write('chunk size='+str(chunk_size)+' , overlap='+str(overlap))
             st.write('<html>'+summary+'</html>', unsafe_allow_html=True)
             end = time.time()
@@ -72,7 +78,13 @@ if __name__ == '__main__':
         if email_send:                        
             myshare.send_email(summary, info)
 
-        content.save_all(summary, transcription, info, fname, local_config)        
+        content.save_all(summary, transcription, info, fname, local_config)      
+        if config.params["backup_folder"]:
+            os.chdir("videos")
+            folder = str.split(fname,'\\')[1]
+            copy_tree(folder, config.params["backup_folder"]+'//'+folder)
+            os.chdir("..")
+        
        
 
 

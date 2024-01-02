@@ -11,7 +11,7 @@ def get_subfolders(relative_path):
     
     return subfolders
 
-def save_all(summary, transcription, info, fname, local_config=None):  
+def save_all(summary, transcription, info, fname, local_config=None, cloud=None):  
     """
         Save summary, transcription, info and filename to a dedicated folder
     """   
@@ -22,7 +22,7 @@ def save_all(summary, transcription, info, fname, local_config=None):
     max_int = max(subfolders_int) if subfolders_int else 0
     version = str(max_int+1)
     os.mkdir(folder+'\\'+version)
-    with open(folder+'\\'+str(max_int+1)+'\\'+name+'_'+version+'.html', "w") as f:
+    with open(folder+'\\'+str(max_int+1)+'\\'+name+'_'+version+'.html', "w", encoding='utf-8') as f:
         f.write(summary)
     if local_config:
         with open(folder+'\\'+str(max_int+1)+'\\'+name+'_'+version+'.json', 'w', encoding='utf-8') as f:

@@ -6,6 +6,8 @@ import speech2text as s2t
 import llms
 import content
 import config
+from distutils.dir_util import copy_tree
+import os
 
 
 if __name__ == '__main__': 
@@ -33,7 +35,7 @@ if __name__ == '__main__':
                     fn,format, info = yp.get_video(url, format='mp3', download=False)    
                     logger.debug(yp.is_recent(info['upload_date']))
                     if (yp.is_recent(info['upload_date'])):                          
-                        logger.debug ( info['channel'],' | ', info['title'], ' | ',info['upload_date'])            
+                        logger.debug(f"{info['channel']} | {info['title']} | {info['upload_date']}")
                         fname, format, info = yp.get_video('https://www.youtube.com/watch?v='+v, format='mp3')
                         logger.debug (f"Duration: {info['duration_string']}")
                         transcription = ws.transcribe(fname+'.'+format)
@@ -41,11 +43,13 @@ if __name__ == '__main__':
                         logger.debug(f'This has  {ntokens} tokens')
                         summary, chunk_size, overlap = llms.get_summary([transcription['text']], ntokens)                    
                         myshare.send_email(summary, info)
-                        logger.info('email sent')
+                        logger.info('email sent')                        
                         content.save_all(summary, transcription, info, fname)
-                        # data = (output, response, info, fname)
-                        # with open(fname+'_sum.p', "wb") as file:
-                        #     pickle.dump(data, file)
+                        if config.params["backup_folder"]:
+                            os.chdir("videos")
+                            folder = str.split(fname,'\\')[1]
+                            copy_tree(folder, config.params["backup_folder"]+'//'+folder)
+                            os.chdir("..")                      
                     else:
                         break   
                 except Exception as e:            
