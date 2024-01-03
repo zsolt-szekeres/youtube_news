@@ -139,7 +139,7 @@ numpy @ file:///C:/b/abs_7267ja_mqz/croot/numpy_and_numpy_base_1701295083047/wor
 oauthlib==3.2.2
 omegaconf==2.3.0
 onnxruntime==1.16.3
-openai==1.5.0
+openai==0.28.1
 openai-whisper==20231117
 opentelemetry-api==1.22.0
 opentelemetry-exporter-otlp-proto-common==1.22.0

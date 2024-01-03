@@ -52,7 +52,7 @@ if __name__ == '__main__':
         prompt = 'Answer the question based on the '+context_num +' contexts after the question, and our prior conversation history (if we have one). \n'+\
             'QUESTION: '+prompt
         for i in range(int(context_num)):
-            prompt = prompt + '\n CONTEXT'+str(i+1)+': '+str(context[i])
+            prompt = prompt + '\n CONTEXT'+str(i+1)+': '+str(context[i].page_content)
         
         st.session_state.messages.append({"role": "user", "content": prompt})
         
@@ -72,12 +72,12 @@ if __name__ == '__main__':
                     stream=True,
                 ):
                     full_response += response.choices[0].delta.get("content", "")
-                    message_placeholder.markdown(full_response + "▌")
+                    message_placeholder.markdown(full_response + " ")
                 message_placeholder.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             with open(st.session_state.fname+"_history.json", "w",encoding='utf-8') as json_file:
                  json.dump(st.session_state.messages, json_file, indent=4)
         except:
-            with st.chat_message("assitant"):
+            with st.chat_message("assistant"):
                 st.markdown('I am stuck. This conversation likely went beyond max tokens. Start a new conversation?')
 
