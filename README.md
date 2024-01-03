@@ -5,15 +5,20 @@ This tool does the following:
 * generates a transcript via OpenAI whisper
 * summarizes them via a combination of OpenAI's GPT API and LangChain's map reduce approach introduced at https://www.youtube.com/watch?v=qaPMdcCqtWk
 * sends the summary by email to you
-* allows to chat with the transcript of the video
+* allows to chat with the transcript of a single video
+* allows to build a knowledge base of multiple videos and chat with those
 
  There are three entry points:
  * main.py offers an interactive UI via streamlit where you can pick a single youtube video and configure prompts and other parameters
  * batch.py offers the opportunity to collect and process recent videos from your favorite channels and schedule this process say daily
- * chat.py implements a RAG (Retrieval Augmented Generator) based on contexts identified by questions in a conversation 
+ * batch_channel.py provides collecting a longer series of videos from a single channel
+ * build_knowledge_base.py helps building a knowledge base in avector store using the transcripts of videos 
+ * chat.py implements a RAG (Retrieval Augmented Generator) based on transcript of a single video with tunable chunk parameters
+ * chat_multiple.py implements a RAG given a pre-built vector store with tunable context parameters
 
 # Setup 
-* I started with Anaconda on Win 11 and have GPU support via pytorch+cuda for the transcription. Installed the few packages included at the top of the .py files. I included a full requirements.txt file for reference.
+* I started with Anaconda 202309 on Win 11 (python 3.11) and have GPU support via pytorch+cuda for the transcription. Installed the few packages included at the top of the .py files. I included a full requirements.txt file for reference.
+* I set up ffmpeg. I used the local install version of Whisper with the medium model.
 * I set up Gmail's two factor authentication to help send automated emails. Also set up the Youtube API and the OpenAI API.
 * All config sits in config.json. The auth_code_env_vars section points to a list of environmental variables which store API keys and the Gmail two-factor pwd.
  
@@ -33,7 +38,25 @@ Execute streamlit run main.py as usual go to the url shown. From here:
 Execute python batch.py. You can simply schedule a bat say in Win task scheduler to get your daily emails based on your favorite config.
 You can review what happened in batch.log.
 
-# Output
+# Run the Single Video Chat
+
+Execute streamlit run chat.py. Pick your chunking parameters and ask away. This one builds a small vector store on the fly.
+
+# Run the Batch Channel script
+
+It is a command line tool. You need to provide the youtube channel ID and the number of videos to collect (going backwards from the most recent one), e.g.: 
+python batch_cannel.py -c C2D2CMWXMOVWx7giW1n3LIg -n 100
+
+# Run the Knowledge Base
+
+It is a command line tool. You can provide some chunking parameters and spreadsheet files to store the catalogue of the knowledge base with some metadata, e.g.
+python build_knowledge_base.py -s 10000 -o 1000
+
+# Run the Multi Video Chat
+
+Execute streamlit run chat_multiple.py. Pick your chunking parameters and ask away. This one builds a small vector store on the fly. Pick your vector store, set MMR (maximal marginal relevance) parameters and potentially tune the prompt, then finally ask away.
+
+# Sample output - main.py
 
 Here's some sample output using Greg's video:
 
@@ -65,5 +88,52 @@ chunk size=3600 , overlap=100
 16. Inviting readers to share their own summarization experiences on Twitter
 
 Summarized in 0.37 mins
+
+# Sample output - chat_multiple.py
+
+Question: How to sleep well?
+
+Vector store: transcripts of about 300 Huberman videos, enriched with the name of the guest implied from the title of the episode
+MMR: fetching 15 videos, using the best 5
+
+Answer:
+
+SOURCE: Dr. Matthew Walker
+
+Have a wind down routine before bed, such as light stretching, meditation, reading, or listening to a relaxing podcast.
+Instead of counting sheep, try taking a mental walk and visualize a pleasant environment, such as nature or a beach.
+Write down any concerns or worries in a journal, at least an hour or two before bed, to help clear your mind.
+Remove all clock faces from your bedroom, including your phone, to avoid checking the time during the night and causing unnecessary stress.
+
+SOURCE: Unknown
+
+Avoid drinking a lot of fluids right before bed to prevent waking up to use the bathroom.
+Drinking water before bed can lead to fragmented REM sleep, resulting in more dream recall.
+Be cautious with serotonin supplements (e.g. tryptophan, 5-HTP), as they can disrupt the timing of REM sleep and slow wave sleep.
+
+SOURCE: AMA #2
+
+The amount of sleep needed varies among individuals, but most adults need at least 6-8 hours of sleep per night.
+Daytime sleepiness is a sign of insufficient sleep.
+Increasing slow wave sleep can be achieved through resistance exercise, which triggers the release of growth hormone.
+Lucid dreaming can be enhanced by setting cues, keeping a dream journal, and optimizing sleep duration.
+Alcohol, marijuana, and serotonin supplements can disrupt sleep architecture.
+Inositol supplementation (900mg) may help individuals fall back asleep if they wake up in the middle of the night.
+
+SOURCE: Dr. Gina Poe
+
+Establish a calm state before sleep through practices like deep breathing, meditation, warm bath, or a comforting book.
+Estrogen may have a protective effect against PTSD and reduce activity in the locus coeruleus during REM sleep.
+Sex differences exist in sleep patterns, with females experiencing more efficient sleep and denser sleep spindles during high hormonal phases.
+Be cautious with sleep trackers, as excessive focus on sleep scores can lead to sleep issues and obsession.
+Use sleep trackers wisely and avoid checking sleep scores immediately after waking to prevent anxiety.
+
+SOURCE: Dr. Andy Galpin
+
+Use non-sleep deep rest practices like yoga nidra, meditation, or deep breathing exercises to promote relaxation before sleep.
+Consider using apps like Reveri for sleep hypnosis or black and white phone screens with limited notifications to minimize disruptions before sleep.
+Be cautious with anti-inflammatory supplements during the recovery phase of exercise. A balanced approach is needed, as some inflammation is necessary for adaptation.
+Prioritize reducing fatigue through tapering and deloading to enhance performance rather than relying solely on anti-inflammatory supplements.
+
 
 
