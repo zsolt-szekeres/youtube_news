@@ -52,9 +52,9 @@ python batch_cannel.py -c C2D2CMWXMOVWx7giW1n3LIg -n 100
 It is a command line tool. You can provide some chunking parameters and spreadsheet files to store the catalogue of the knowledge base with some metadata, e.g.
 python build_knowledge_base.py -s 10000 -o 1000
 
-# Run the Multi Video Chat
+# Run the Multi-Video Chat
 
-Execute streamlit run chat_multiple.py. Pick your chunking parameters and ask away. This one builds a small vector store on the fly. Pick your vector store, set MMR (maximal marginal relevance) parameters and potentially tune the prompt, then finally ask away.
+Execute streamlit run chat_multiple.py. Pick your MMR (maximal marginal relevance) parameters, potentially the prompt and ask away. This one relies on the vector store built with previously specified chunking parameters in the above step. Ask away and get multiple perspectives on your question.
 
 # Sample output - main.py
 
