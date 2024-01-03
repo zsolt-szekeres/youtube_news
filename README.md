@@ -54,7 +54,7 @@ python build_knowledge_base.py -s 10000 -o 1000
 
 # Run the Multi-Video Chat
 
-Execute streamlit run chat_multiple.py. Pick your MMR (maximal marginal relevance) parameters, potentially the prompt and ask away. This one relies on the vector store built with previously specified chunking parameters in the above step. Ask away and get multiple perspectives on your question.
+Execute streamlit run chat_multiple.py. Pick your vector store, the MMR (maximal marginal relevance) parameters, potentially the prompt and ask away. This one relies on the vector store built with previously specified chunking parameters in the above step. Ask away and get multiple perspectives on your question.
 
 # Sample output - main.py
 
