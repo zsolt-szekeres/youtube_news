@@ -135,5 +135,93 @@ Consider using apps like Reveri for sleep hypnosis or black and white phone scre
 Be cautious with anti-inflammatory supplements during the recovery phase of exercise. A balanced approach is needed, as some inflammation is necessary for adaptation.
 Prioritize reducing fatigue through tapering and deloading to enhance performance rather than relying solely on anti-inflammatory supplements.
 
+# Setting up Linux development environment
 
+Tested on Linuxmint 21.3 , which is a debian-like system.
 
+1. Install NVIDIA Geforce Drivers https://www.cyberciti.biz/faq/ubuntu-linux-install-nvidia-driver-latest-proprietary-driver/
+
+```bash
+$ sudo apt update
+$ sudo apt upgrade
+$ sudo apt install nvidia-driver-545 nvidia-dkms-545
+$ reboot
+# Test
+$ nvidia-smi 
+Tue Feb 20 23:59:21 2024       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 545.29.06              Driver Version: 545.29.06    CUDA Version: 12.3     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA GeForce RTX 4060 ...    Off | 00000000:01:00.0 Off |                  N/A |
+| N/A   38C    P3             588W /  35W |      9MiB /  8188MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|    0   N/A  N/A      2782      G   /usr/lib/xorg/Xorg                            4MiB |
++---------------------------------------------------------------------------------------+
+```
+
+2. Install Python 3.11 and other tools
+
+```bash
+apt-get install -y \
+        git \
+        ffmpeg \
+        python3.11 \
+        python3.11-venv
+```
+
+3. Clone the repository
+
+```bash
+git clone https://github.com/zsolt-szekeres/youtube_news.git \
+    && cd youtube_news \
+    && git checkout main
+```
+
+4. Create virtual environment
+
+```bash
+python3.11 -m venv env \
+    && . env/bin/activate \
+    && pip install --upgrade pip==24.0 \
+    && pip install --upgrade setuptools==69.1.0 \
+    && pip install -r requirements_py3.11_noconda.txt
+```
+
+5. Set environmental variables
+ (added to ~/.bashrc)
+
+```bash
+export YOUTUBE_API_KEY=...
+export OPENAI_API_KEY=...
+export GMAIL_TWOFACTOR=...
+```
+Don't forget to restart bash, e.g., close and open the terminal.
+
+5. Update email addresses, save folder paths in config.json to valid values.
+```bash
+...
+    "email": {
+        "sender_email": "youremail@com",
+        "receiver_emails":  ["email1@gmail.com","email2@gmail.com"]
+    },
+    "backup_folder": "g:/whatever",
+    "vector_store": "c:/whatever"
+...
+```
+6. Run one of the entrypoints, e.g main.py
+
+```bash
+. env/bin/activate
+streamlit run main.py
+```

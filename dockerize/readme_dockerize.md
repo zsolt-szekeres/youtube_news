@@ -21,6 +21,7 @@ $ docker --version
 Docker version 24.0.5, build 24.0.5-0ubuntu1~22.04.1
 ```
 
+Some tools to manage Docker Engine:
 ```bash
 # list available docker contexts (default is Docker Engine
 # NOTE: Docker Desktop is a VM, not installed, it would be called desktop-linux
@@ -39,7 +40,7 @@ $ sudo systemctl start docker docker.socket containerd
 $ sudo systemctl status docker
 ```
 
-## Installing the NVIDIA Container Toolkit
+## Install NVIDIA Container Toolkit
 https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 
 The NVIDIA Container Toolkit enables users to build and run GPU-accelerated containers. The toolkit includes a container runtime library and utilities to automatically configure containers to leverage NVIDIA GPUs.
@@ -56,7 +57,7 @@ $ sudo apt-get install -y nvidia-container-toolkit
 The following NEW packages will be installed:
   libnvidia-container-tools libnvidia-container1 nvidia-container-toolkit nvidia-container-toolkit-base
 ```
-Configuring Docker Engine to use nvidia-container-runtime 
+Configuration of Docker Engine to use nvidia-container-runtime 
 
 (NOTE: rootless mode should be used in production environment,
 see https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#rootless-mode)
@@ -74,7 +75,9 @@ $ cat /etc/docker/daemon.json
 $ sudo systemctl restart docker docker.socket containerd
 ```
 
-Test: run a sample CUDA container
+Test visibility of GPUs from container
+
+Running a sample CUDA container and calling nvidia-smi at its entrypoint
 ```bash
 $ sudo docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
 Unable to find image 'ubuntu:latest' locally
@@ -103,7 +106,8 @@ Wed Feb 21 16:04:26 2024
 +---------------------------------------------------------------------------------------+
 ```
 
-## Build image
+## Build image 
+For initial testing of Dockerfile. Do not publish these images because you expose your API keys.
 ```bash
 $ cd dockerize
 $ docker build \
@@ -114,14 +118,20 @@ $ docker build \
   -t youtube_news:main \
   .
 ```
-TODO: docker image inspect contains the API keys. Sensitive info should not be stored in dockerimage. Neither passed as -e argument of docker run.
+TODO: docker image inspection reveals the API keys. Sensitive info should not be stored in docker image. Neither passed as -e argument of docker run.
 
 ## Run image in local environment
 ```bash
 $ docker run --rm --gpus all --runtime=nvidia -e STREAMLIT_PORT=8501 -p 8501:8501 youtube_news:main streamlit run main.py --server.port 8501
 ```
 
-TODO: 
+TODO:
  * configure config.json during build or runtime.
- * save files to S3 or GFS.
+ * save files to S3 or GFS / mounted NFS
+ * solve security issues: passing secrets to applications running in containers (not through -e —build-arg)
 
+## S3 /GFS test environment
+Minio server provides S3 / GFS service locally.
+```bash
+$ docker run --rm -p 9000:9000 -e "MINIO_ROOT_USER=AKIAIOSFODNN7EXAMPLE" -e "MINIO_ROOT_PASSWORD=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" 
+```
