@@ -43,7 +43,7 @@ if __name__ == '__main__':
         button2 = st.button('Save this chat')       
 
     if button1:   
-        st.session_state.db = Chroma(persist_directory= vector_store, embedding_function= OpenAIEmbeddings())
+        st.session_state.db = Chroma(persist_directory= vector_store, embedding_function= OpenAIEmbeddings())        
         st.write(vector_store+' has been loaded.')
         collection = st.session_state.db._collection
         metadata = collection.get(0)['metadatas']
@@ -80,7 +80,8 @@ if __name__ == '__main__':
             with st.chat_message("assistant"):
                 message_placeholder = st.empty()
                 full_response = ""
-                for response in openai.ChatCompletion.create(
+                #for response in openai.ChatCompletion.create(
+                for response in openai.chat.completions.create(                    
                     model=st.session_state["openai_model"],
                     messages=[
                         {"role": m["role"], "content": m["content"]}
@@ -88,7 +89,10 @@ if __name__ == '__main__':
                     ],
                     stream=True,
                 ):
-                    full_response += response.choices[0].delta.get("content", "")
+                    #full_response += response.choices[0].delta.get("content", "")
+                    res = dict(response.choices[0].delta).get('content')
+                    if res:
+                        full_response += res
                     message_placeholder.markdown(full_response + "▌")
                 message_placeholder.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})

@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     with st.sidebar:
         st.header("Configuration")        
-        cache_folder = st.text_input('Path to folder of the previous dump')    
+        cache_folder = st.text_input('Path to folder of the previous dump')          
         context_num = st.text_input(label='Number of relevant contexts',value=3)
         context_len = st.text_input(label='Length of contexts (chars)', value=1000)
         context_overlap = st.text_input(label='Overlap of contexts (chars)',value=50)
@@ -30,6 +30,7 @@ if __name__ == '__main__':
     if button1:     
         st.session_state.transcription, st.session_state.info = content.get_transcript(cache_folder)
         st.session_state.fname = str.split(cache_folder,'\\')[3]+'\\'+str.split(cache_folder,'\\')[4]+'\\'+str.split(cache_folder,'\\')[4]
+        st.session_state.history_file = cache_folder+str.split(cache_folder,'\\')[4]+"_history.json"  
         st.write('*Content has been loaded*')
 
     openai.api_key = config.params['auth_codes']['OpenAI_API_key']
@@ -63,7 +64,8 @@ if __name__ == '__main__':
             with st.chat_message("assistant"):
                 message_placeholder = st.empty()
                 full_response = ""
-                for response in openai.ChatCompletion.create(
+                #for response in openai.ChatCompletion.create(
+                for response in openai.chat.completions.create(
                     model=st.session_state["openai_model"],
                     messages=[
                         {"role": m["role"], "content": m["content"]}
@@ -71,13 +73,17 @@ if __name__ == '__main__':
                     ],
                     stream=True,
                 ):
-                    full_response += response.choices[0].delta.get("content", "")
+                    #full_response += response.choices[0].delta.get("content", "")
+                    res = dict(response.choices[0].delta).get('content')
+                    if res:
+                        full_response += res
                     message_placeholder.markdown(full_response + " ")
                 message_placeholder.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            with open(st.session_state.fname+"_history.json", "w",encoding='utf-8') as json_file:
+            st.session_state.messages.append({"role": "assistant", "content": full_response})            
+            #with open(st.session_state.fname+"_history.json", "w",encoding='utf-8') as json_file:
+            with open(st.session_state.history_file, "w",encoding='utf-8') as json_file:
                  json.dump(st.session_state.messages, json_file, indent=4)
-        except:
+        except Exception as e:
             with st.chat_message("assistant"):
                 st.markdown('I am stuck. This conversation likely went beyond max tokens. Start a new conversation?')
 
