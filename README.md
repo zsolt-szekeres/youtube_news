@@ -8,7 +8,7 @@ This tool does the following:
 * allows to chat with the transcript of a single video
 * allows to build a knowledge base of multiple videos and chat with those
 
- There are three entry points:
+ There are 6 entry points:
  * main.py offers an interactive UI via streamlit where you can pick a single youtube video and configure prompts and other parameters
  * batch.py offers the opportunity to collect and process recent videos from your favorite channels and schedule this process say daily
  * batch_channel.py provides collecting a longer series of videos from a single channel
