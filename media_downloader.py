@@ -10,11 +10,17 @@ import config
 
 logger = logging.getLogger(__name__)
 
+
 class MediaDownloader:
-    def __init__(self, config, days_limit=2, \
-        lookback_days=config.params['lookback_days'], save_path=os.getcwd(), 
-        output_format='mp3'):
-        self.yt_api_key = config.params['auth_codes']['Youtube_API_key']
+    def __init__(
+        self,
+        config,
+        days_limit=2,
+        lookback_days=config.params["lookback_days"],
+        save_path=os.getcwd(),
+        output_format="mp3",
+    ):
+        self.yt_api_key = config.params["auth_codes"]["Youtube_API_key"]
         self.days_limit = days_limit
         self.lookback_days = lookback_days
         self.save_path = save_path
@@ -41,7 +47,7 @@ class MediaDownloader:
         video_ids = self._get_videos_from_channel(channel_id, max_results)
         videos = []
         for vid in video_ids:
-            url = f'https://www.youtube.com/watch?v={vid}'
+            url = f"https://www.youtube.com/watch?v={vid}"
             videos.append(self._get_audio_from_youtube(url))
         return videos
 
@@ -52,11 +58,13 @@ class MediaDownloader:
             episode_date = datetime(*entry.published_parsed[:6])
             if self._is_recent(episode_date, self.days_limit):
                 mp3_url = entry.enclosures[0].href
-                file_name = os.path.join(self.save_path, entry.title.replace(" ", "_") + ".mp3")
+                file_name = os.path.join(
+                    self.save_path, entry.title.replace(" ", "_") + ".mp3"
+                )
                 try:
                     response = requests.get(mp3_url, stream=True)
                     response.raise_for_status()
-                    with open(file_name, 'wb') as mp3_file:
+                    with open(file_name, "wb") as mp3_file:
                         for chunk in response.iter_content(chunk_size=1024 * 1024):
                             if chunk:
                                 mp3_file.write(chunk)
@@ -67,14 +75,18 @@ class MediaDownloader:
 
     def _get_audio_from_youtube(self, url: str) -> tuple:
         ytdl_opts = {
-            'format': 'bestaudio',
-            'outtmpl': os.path.join(self.save_path, 'videos/%(title)s/%(title)s.%(ext)s'),
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': self.output_format,
-                'preferredquality': '192',
-            }],
-            'quiet': True
+            "format": "bestaudio",
+            "outtmpl": os.path.join(
+                self.save_path, "videos/%(title)s/%(title)s.%(ext)s"
+            ),
+            "postprocessors": [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": self.output_format,
+                    "preferredquality": "192",
+                }
+            ],
+            "quiet": True,
         }
 
         with yt_dlp.YoutubeDL(ytdl_opts) as ytdl:
@@ -90,7 +102,7 @@ class MediaDownloader:
             "key": self.yt_api_key,
             "order": "date",
             "maxResults": max_results,
-            "type": "video"
+            "type": "video",
         }
 
         response = self._youtube_api_request(url_params)
@@ -99,8 +111,8 @@ class MediaDownloader:
 
         video_ids = [item["id"]["videoId"] for item in response["items"]]
 
-        while ('nextPageToken' in response) and (len(video_ids) < max_results):
-            url_params['pageToken'] = response['nextPageToken']
+        while ("nextPageToken" in response) and (len(video_ids) < max_results):
+            url_params["pageToken"] = response["nextPageToken"]
             response = self._youtube_api_request(url_params)
             if not response:
                 break

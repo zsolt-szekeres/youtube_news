@@ -1,0 +1,7 @@
+env/
+.vscode/
+__pycache__/
+videos/
+backup/
+vector_store/
+launch.json
