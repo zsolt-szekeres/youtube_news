@@ -5,3 +5,4 @@ videos/
 backup/
 vector_store/
 launch.json
+config.json
