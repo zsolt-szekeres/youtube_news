@@ -30,8 +30,11 @@ Execute streamlit run main.py as usual go to the url shown. From here:
   * provide the path to the folder created in a previous step (This supports caching the transcript from previous runs.)
 * You may wanna play with the prompts and the map reduce parameters chunk_size and overlap. This becomes handy when you work with the cached transcript and perform your sensitivity analysis.
 * The checkbox lets you decide if you wanna have the email or just wanna play on the UI
-* Pressing the button will run this thing and the UI will give you some details on the video before giving the summary.
+* Pressing the 'Get input and summarize' button will run this thing and the UI will give you some details on the video before giving the summary.
 * Output will be stored in a dedicated subfolder called videos.
+
+![image](https://github.com/zsolt-szekeres/youtube_news/assets/15879446/7c85d2b9-7ea8-4769-a8f4-dbfcc295fb41)
+
 
 # Run the Batch Version
 
@@ -137,7 +140,7 @@ Prioritize reducing fatigue through tapering and deloading to enhance performanc
 
 # Setting up Linux development environment
 
-Tested on Linuxmint 21.3 , which is a debian-like system.
+Tested on Linuxmint 21.3 , which is a debian-like system. (Also works from Ubuntu WSL from Windows.)
 
 1. Install NVIDIA Geforce Drivers https://www.cyberciti.biz/faq/ubuntu-linux-install-nvidia-driver-latest-proprietary-driver/
 
@@ -173,7 +176,7 @@ Tue Feb 20 23:59:21 2024
 2. Install Python 3.11 and other tools
 
 ```bash
-apt-get install -y \
+sudo apt-get install -y \
         git \
         ffmpeg \
         python3.11 \
@@ -225,3 +228,5 @@ Don't forget to restart bash, e.g., close and open the terminal.
 . env/bin/activate
 streamlit run main.py
 ```
+When running this from Ubuntu WSL, you may get the gio: http://localhost:8501: Operation not supported error msg. This basically means that the streamlit UI doesn't start automatically and http://localhost:8501 needs to be opened manually from the browser. 
+
