@@ -17,13 +17,12 @@ class MediaDownloader:
         config,
         days_limit=2,
         lookback_days=config.params["lookback_days"],
-        save_path=os.getcwd(),
         output_format="mp3",
     ):
         self.yt_api_key = config.params["auth_codes"]["Youtube_API_key"]
         self.days_limit = days_limit
         self.lookback_days = lookback_days
-        self.save_path = save_path
+        self.save_path = config.params["videos_folder"]
         self.output_format = output_format
 
     def _is_recent(self, date, lookback=None) -> bool:
@@ -77,7 +76,7 @@ class MediaDownloader:
         ytdl_opts = {
             "format": "bestaudio",
             "outtmpl": os.path.join(
-                self.save_path, "videos/%(title)s/%(title)s.%(ext)s"
+                self.save_path, "%(title)s/%(title)s.%(ext)s"
             ),
             "postprocessors": [
                 {

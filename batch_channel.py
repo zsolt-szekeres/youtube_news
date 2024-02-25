@@ -33,7 +33,7 @@ if __name__ == "__main__":
     logging.basicConfig(
         level=logging.DEBUG if config.params["run_mode"] == "DEBUG" else logging.INFO,
         format="%(asctime)s - %(levelname)s - %(message)s",
-        filename="batch.log",
+        filename=os.path.join(config.params["log_folder"], "batch_channel.log"),
         filemode="w",
     )
     logger = logging.getLogger()

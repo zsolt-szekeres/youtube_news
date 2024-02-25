@@ -34,6 +34,14 @@ class _ConfigParser:
     @property
     def vector_store(self):
         return self.data["vector_store"]
+    
+    @property
+    def videos_folder(self):
+        return self.data["videos_folder"]
+    
+    @property
+    def log_folder(self):
+        return self.data["log_folder"]
 
     @property
     def auth_codes(self):
@@ -58,6 +66,8 @@ params = {
     "auth_codes": _config_parser.auth_codes,
     "email": _config_parser.email,
     "run_mode": _config_parser.run_mode,
+    "log_folder": _config_parser.log_folder,
+    "videos_folder": _config_parser.videos_folder,
     "backup_folder": _config_parser.backup_folder,
     "vector_store": _config_parser.vector_store,
 }
