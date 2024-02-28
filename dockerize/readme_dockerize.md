@@ -118,20 +118,8 @@ $ docker build \
   -t youtube_news:main \
   .
 ```
-TODO: docker image inspection reveals the API keys. Sensitive info should not be stored in docker image. Neither passed as -e argument of docker run.
 
 ## Run image in local environment
 ```bash
 $ docker run --rm --gpus all --runtime=nvidia -e STREAMLIT_PORT=8501 -p 8501:8501 youtube_news:main streamlit run main.py --server.port 8501
-```
-
-TODO:
- * configure config.json during build or runtime.
- * save files to S3 or GFS / mounted NFS
- * solve security issues: passing secrets to applications running in containers (not through -e —build-arg)
-
-## S3 /GFS test environment
-Minio server provides S3 / GFS service locally.
-```bash
-$ docker run --rm -p 9000:9000 -e "MINIO_ROOT_USER=AKIAIOSFODNN7EXAMPLE" -e "MINIO_ROOT_PASSWORD=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" 
 ```

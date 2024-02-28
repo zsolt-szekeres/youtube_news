@@ -1,0 +1,275 @@
+# Create a new namespace for the youtube_news app.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: yt-news # Change this value if you want a different namespace name
+  labels:
+    name: yt-news # Change this value to match metadata.name
+---
+# The folllowing command creates an ugly configmap file containing \r \n \ characters:
+#   kubectl create configmap yt-news-config --from-file=config.json --dry-run=client -o yaml > yt_news-config.yaml
+# Hence, it is better to create the configmap file manually by copy-pasting config.json below and indenting the yaml file properly.
+# The *_folder, vector_store parameters should be kept as they are, as the persistent volume is mounted to /data (see later volumeMounts)
+apiVersion: v1
+data:
+  config.json: |
+    {
+      "youtube_channels": [
+          {"id": "UCNJ1Ymd5yFuUPtn21xtRbbw", "descriptor": "AI-Explained"},
+          {"id": "UCSHZKyawb77ixDdsGog4iWA", "descriptor": "Lex Fridman"},
+          {"id": "UCwD5YYkbYmN2iFHON9FyDXg", "descriptor": "David Sinclair"},
+          {"id": "UC2D2CMWXMOVWx7giW1n3LIg", "descriptor": "Huberman"},
+          {"id": "UCAuUUnT6oDeKwE6v1NGQxug", "descriptor": "TED"},
+          {"id": "UCyR2Ct3pDOeZSRyZH5hPO-Q", "descriptor": "Data Independent"},
+          {"id": "UCvKRFNawVcuz4b9ihUTApCg", "descriptor": "4IR with David Shapiro"},
+          {"id": "UCK7tJXHCdxWpA4Q5349wfkw", "descriptor": "Invisible Machines"}
+        ],
+      "gpt": {
+          "simple_model": "gpt-3.5-turbo",
+          "mapreduce_model": "gpt-3.5-turbo",
+          "simple_prompt": "Summarize the context provided by the user. Return your response in html as ordered list, which covers the key points of the text.",
+          "map_prompt": " Write a concise summary of the following: '{text}' CONCISE SUMMARY:",
+          "combine_prompt": "Analyze the following text and extract the  most crucial points. Return your summary in HTML as an ordered list. '{text}' "
+      },
+      "chunking": {
+          "size": 6000,
+          "overlap": 300
+      },
+      "lookback_days": 2,
+      "run_mode": "NORMAL",
+      "auth_codes_env_vars": {
+          "Youtube_API_key": "YOUTUBE_API_KEY",
+          "OpenAI_API_key": "OPENAI_API_KEY",
+          "GMAIL_two_factor_password": "GMAIL_TWOFACTOR"
+      },
+      "email": {
+          "sender_email": "youremail@com",
+          "receiver_emails":  ["email1@gmail.com","email2@gmail.com"]
+      },
+      "log_folder": "/data/log",
+      "videos_folder": "/data/videos",
+      "backup_folder": "/data/backup",
+      "vector_store": "/data/vector_store"
+    }
+kind: ConfigMap
+metadata:
+  name: yt-news-config-json
+  namespace: yt-news
+---
+# created by 
+# kubectl create secret generic yt-news-secret \
+#   --from-literal='youtube_api_key'='your_youtube_api_key' \
+#   --from-literal='openai_api_key'='your_youtube_api_key' \
+#   --from-literal='gmail_twofactor'='your_gmail_twofactor_app_password' \
+#   --dry-run='client' \
+#   --output=yaml > yt-news-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: yt-news-secret
+  namespace: yt-news
+type: Opaque
+data:
+  gmail_twofactor: ... # echo -n 'your_gmail_twofactor_app_password' | base64
+  openai_api_key: ... # echo -n 'your_openai_api_key' | base64
+  youtube_api_key: ... # echo -n 'your_youtube_api_key' | base64
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs
+  namespace: yt-news
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 500Mi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs
+spec:
+  capacity:
+    storage: 500Mi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: nfs-server
+    path: /youtube-news/data
+---
+## create deployment for yt_news
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: youtube-news-deployment
+  namespace: yt-news
+spec:
+  replicas: 1 # specify the number of Pods you want
+  selector:
+    matchLabels:
+      app: youtube-news
+  template:
+    metadata:
+      labels:
+        app: youtube-news
+    spec:
+      containers:
+      - name: youtube-news
+        image: youtube_news_minikube:main
+        resources:
+          limits:
+            memory: "6Gi"
+            cpu: "6000m"
+            nvidia.com/gpu: "1"
+        ###### Select one of the entrypoints
+        ## run one of the entrypoints of youtuve_news app
+        args: ['streamlit', 'run', 'main.py', '--server.port', '8501']
+        ports:
+        - containerPort: 8501
+        ## or uncomment the following lines to run the container in interactive mode
+        # stdin: true
+        # stdinOnce: true
+        # tty: true
+        # workingDir: '/'
+        #######
+        env:
+        - name: YOUTUBE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: yt-news-secret
+              key: youtube_api_key
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: yt-news-secret
+              key: openai_api_key
+        - name: GMAIL_TWOFACTOR
+          valueFrom:
+            secretKeyRef:
+              name: yt-news-secret
+              key: gmail_twofactor
+        - name: config.json
+          valueFrom:
+            configMapKeyRef:
+              name: yt-news-config-json
+              key: config.json
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: nfs
+          mountPath: /data
+        - name: config-volume
+          mountPath: /etc/config
+      nodeSelector:
+        kubernetes.io/hostname: minikube
+      volumes:
+      - name: config-volume
+        configMap:
+          name: yt-news-config-json
+      - name: nfs
+        persistentVolumeClaim:
+          claimName: nfs
+      # - name: localvolume
+      #   hostPath:
+      #     path: /volumes/youtube-news/data
+      #     type: DirectoryOrCreate
+---
+# create service for yt_news
+# kubectl create service clusterip yt-news --tcp=8501:8501 --dry-run=client -o yaml > yt_news-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: youtube-news
+  namespace: yt-news
+spec:
+  ports:
+  - name: streamlit-port
+    port: 5000
+    protocol: TCP
+    targetPort: 8501
+  selector:
+    app: youtube-news
+---
+# Create ingress for the streamlit service
+# kubectl create ingress yt-news-ingress --class=nginx --rule=yt-news.minikube.local/*=yt-news:8501 --dry-run=client -o yaml > yt_news-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: yt-news-ingress
+  namespace: yt-news
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: yt-news.minikube.local
+    http:
+      paths:
+      - backend:
+          service:
+            name: youtube-news
+            port:
+              number: 5000
+        path: /
+        pathType: Prefix
+---
+# create a cronjob of the youtube_news app
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: youtube-news-cronjob
+  namespace: yt-news
+spec:
+  schedule: "7 * * * *" # This is an example schedule for every hour, adjust as needed
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: youtube-news
+            image: youtube_news_minikube:main
+            resources:
+              limits:
+                memory: "6Gi"
+                cpu: "6000m"
+                #nvidia.com/gpu: "1"
+            args: ['python', 'batch.py']
+            ports:
+            - containerPort: 8501
+            env:
+            - name: YOUTUBE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: yt-news-secret
+                  key: youtube_api_key
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: yt-news-secret
+                  key: openai_api_key
+            - name: GMAIL_TWOFACTOR
+              valueFrom:
+                secretKeyRef:
+                  name: yt-news-secret
+                  key: gmail_twofactor
+            - name: config.json
+              valueFrom:
+                configMapKeyRef:
+                  name: yt-news-config-json
+                  key: config.json
+            imagePullPolicy: IfNotPresent
+            volumeMounts:
+            - name: nfs
+              mountPath: /data
+            - name: config-volume
+              mountPath: /etc/config
+          nodeSelector:
+            kubernetes.io/hostname: minikube
+          volumes:
+          - name: config-volume
+            configMap:
+              name: yt-news-config-json
+          - name: nfs
+            persistentVolumeClaim:
+              claimName: nfs
+          restartPolicy: OnFailure
