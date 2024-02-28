@@ -129,7 +129,10 @@ kubectl apply -f yt_news-deployment.yaml
 kubectl -n yt-news exec -it youtube-news-deployment-<...> -- /bin/bash
 
 # watch logs of application, if started at entrypoint 
-kubectl -n yt-news logs youtube-news -f
+kubectl -n yt-news logs youtube-news-deployment-<...> -f
+
+# suspend job
+kubectl -n yt-news patch cronjob youtube-news-cronjob -p '{"spec" : {"suspend" : true }}'
 ```
 
 # Stop minikube
