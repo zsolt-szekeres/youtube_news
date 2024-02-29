@@ -7,6 +7,7 @@ import config
 import myshare
 import llms
 import speech2text as s2t
+import youtube_transcript as yt
 import content
 
 from media_downloader import MediaDownloader
@@ -15,7 +16,7 @@ import os
 
 
 if __name__ == "__main__":
-
+    do_skip_rest = False
     media_downloader = MediaDownloader(config)
     st.markdown("*Loading speech-to-text model...*")
     ws = s2t.ws()
@@ -57,22 +58,43 @@ if __name__ == "__main__":
     if button1:
 
         if yt_link:
-            start = time.time()
-            fname, format, info = yp.get_video(yt_link)
-            # fname, format, info = media_downloader._get_audio_from_youtube(yt_link)
-            end = time.time()
+            if config.params["yt_transcript_api_enabled"]:
+                transcription = {}
+                transcription["text"], _ = yt.get_transcript(
+                    yt_link=yt_link, do_assert=True
+                )
+                if transcription["text"] is None:
+                    st.write("No transcript found")
+                    do_skip_rest = True
 
-            st.write(
-                f'Downloaded {fname+"."+format} in  {round((end - start) / 60, 2)}  mins'
-            )
-            st.write(f"Duration: {info['duration_string']}")
-            st.image(info["thumbnail"])
+                if not do_skip_rest:
+                    start = time.time()
+                    fname, format, info = yp.get_video(yt_link, download=False)
+                    end = time.time()
 
-            st.markdown("*Speech to text...*")
-            start = time.time()
-            transcription = ws.transcribe(fname + "." + format)
-            end = time.time()
-            st.write(f"Transcribed in  {round((end - start) / 60, 2)}  mins")
+                    st.write(
+                        f'Downloaded youtube transcript of {fname+"."+format} in  {round((end - start) / 60, 2)}  mins'
+                    )
+                    st.write(f"Duration: {info['duration_string']}")
+                    st.image(info["thumbnail"])
+            else:
+                start = time.time()
+                fname, format, info = yp.get_video(yt_link)
+                # fname, format, info = media_downloader._get_audio_from_youtube(yt_link)
+                end = time.time()
+
+                st.write(
+                    f'Downloaded {fname+"."+format} in  {round((end - start) / 60, 2)}  mins'
+                )
+                st.write(f"Duration: {info['duration_string']}")
+                st.image(info["thumbnail"])
+
+                st.markdown("*Speech to text...*")
+
+                start = time.time()
+                transcription = ws.transcribe(fname + "." + format)
+                end = time.time()
+                st.write(f"Transcribed in  {round((end - start) / 60, 2)}  mins")
         else:
             transcription, info = content.get_transcript(cache_folder)
             fname = (
@@ -82,33 +104,33 @@ if __name__ == "__main__":
                 + os.sep
                 + str.split(cache_folder, os.sep)[4]
             )
+        if not do_skip_rest:
+            if debug_mode:
+                config.params["email"]["receiver_emails"] = [
+                    config.params["email"]["sender_email"]
+                ]
+            ntokens = llms.get_num_tokens(transcription["text"])
+            st.write(f"This has  {ntokens} tokens")
 
-        if debug_mode:
-            config.params["email"]["receiver_emails"] = [
-                config.params["email"]["sender_email"]
-            ]
-        ntokens = llms.get_num_tokens(transcription["text"])
-        st.write(f"This has  {ntokens} tokens")
+            with st.spinner("Summarizing..."):
+                st.markdown("*Summarizing...*")
+                start = time.time()
+                summary, chunk_size, overlap = llms.get_summary(
+                    [transcription["text"]], ntokens, local_config
+                )
+                # docs_search, context = llms.get_context_for_bot('what is knowledge', [transcription['text']], local_config)
+                st.write("chunk size=" + str(chunk_size) + " , overlap=" + str(overlap))
+                st.write("<html>" + summary + "</html>", unsafe_allow_html=True)
+                end = time.time()
+                st.write(f"Summarized in  {round((end - start) / 60, 2)}  mins")
 
-        with st.spinner("Summarizing..."):
-            st.markdown("*Summarizing...*")
-            start = time.time()
-            summary, chunk_size, overlap = llms.get_summary(
-                [transcription["text"]], ntokens, local_config
-            )
-            # docs_search, context = llms.get_context_for_bot('what is knowledge', [transcription['text']], local_config)
-            st.write("chunk size=" + str(chunk_size) + " , overlap=" + str(overlap))
-            st.write("<html>" + summary + "</html>", unsafe_allow_html=True)
-            end = time.time()
-            st.write(f"Summarized in  {round((end - start) / 60, 2)}  mins")
+            # Send the email
+            if email_send:
+                myshare.send_email(summary, info)
 
-        # Send the email
-        if email_send:
-            myshare.send_email(summary, info)
-
-        content.save_all(summary, transcription, info, fname, local_config)
-        if config.params["backup_folder"]:
-            os.chdir("videos")
-            folder = str.split(fname, os.sep)[1]
-            copy_tree(folder, config.params["backup_folder"] + os.sep + folder)
-            os.chdir("..")
+            content.save_all(summary, transcription, info, fname, local_config)
+            if config.params["backup_folder"]:
+                os.chdir("videos")
+                folder = str.split(fname, os.sep)[1]
+                copy_tree(folder, config.params["backup_folder"] + os.sep + folder)
+                os.chdir("..")

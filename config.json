@@ -34,5 +34,6 @@
     "log_folder": "g:/whatever/log",
     "videos_folder": "./videos",
     "backup_folder": "g:/whatever",
-    "vector_store": "c:/whatever"
+    "vector_store": "c:/whatever",
+    "yt_transcript_api_enabled": true
 }

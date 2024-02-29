@@ -6,6 +6,8 @@ import config
 def get_subfolders(relative_path):
 
     absolute_path = os.path.abspath(relative_path)
+    if not os.path.exists(absolute_path):
+        os.makedirs(absolute_path)
     all_entries = os.listdir(absolute_path)
     subfolders = [
         entry

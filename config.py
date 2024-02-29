@@ -34,11 +34,11 @@ class _ConfigParser:
     @property
     def vector_store(self):
         return self.data["vector_store"]
-    
+
     @property
     def videos_folder(self):
         return self.data["videos_folder"]
-    
+
     @property
     def log_folder(self):
         return self.data["log_folder"]
@@ -56,6 +56,10 @@ class _ConfigParser:
             self.data["email"]["receiver_emails"] = [self.data["email"]["sender_email"]]
         return self.data["email"]
 
+    @property
+    def yt_transcript_api_enabled(self):
+        return self.data["yt_transcript_api_enabled"]
+
 
 _config_parser = _ConfigParser("config.json")
 params = {
@@ -70,4 +74,5 @@ params = {
     "videos_folder": _config_parser.videos_folder,
     "backup_folder": _config_parser.backup_folder,
     "vector_store": _config_parser.vector_store,
+    "yt_transcript_api_enabled": _config_parser.yt_transcript_api_enabled,
 }
