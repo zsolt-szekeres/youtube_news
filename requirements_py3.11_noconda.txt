@@ -156,5 +156,6 @@ websockets==12.0
 whisper==1.1.10
 wrapt==1.16.0
 yarl==1.9.4
+youtube-transcript-api==0.6.2
 yt-dlp==2023.12.30
 zipp==3.17.0
