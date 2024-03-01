@@ -72,6 +72,7 @@ if __name__ == "__main__":
                             transcription = ws.transcribe(fname + "." + format)
                             ntokens = llms.get_num_tokens(transcription["text"])
                             logger.debug(f"This has  {ntokens} tokens")
+                            info["ntokens"] = ntokens
                             summary, chunk_size, overlap = llms.get_summary(
                                 [transcription["text"]], ntokens
                             )

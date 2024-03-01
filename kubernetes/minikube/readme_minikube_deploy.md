@@ -76,13 +76,13 @@ docker build -t youtube_news_minikube:main . -f kubernetes/minikube/Dockerfile
 
 ## Briefly
 
-1. Start NFS server
+1. Start NFS server from a new terminal
 ```bash
-modprobe nfs
-modprobe nfsd
+sudo modprobe nfs
+sudo modprobe nfsd
 docker run -d --rm --privileged --name nfs-server  -v /var/nfs:/var/nfs phico/nfs-server:latest
 docker network connect minikube nfs-server
-sudo mkdir /var/nfs/youtube_news/data
+sudo mkdir -p /var/nfs/youtube_news/data
 ```
 
 2. Add your api keys to secrets 

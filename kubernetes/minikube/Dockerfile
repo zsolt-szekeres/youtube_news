@@ -1,13 +1,12 @@
 FROM nvidia/cuda:12.3.0-base-ubuntu22.04
 
 # Install system dependencies
-RUN apt-get update && \
-    apt-get install -y \
-        git \
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
         ffmpeg \
         python3.11 \
         python3.11-venv \
-        jq nvtop htop
+    && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /youtube_news
@@ -18,9 +17,9 @@ COPY requirements_py3.11_noconda.txt requirements_py3.11_noconda.txt
 # Create python virtual environment
 RUN python3.11 -m venv env \
     && . env/bin/activate \
-    && pip install --upgrade pip==24.0 \
-    && pip install --upgrade setuptools==69.1.0 \
-    && pip install -r requirements_py3.11_noconda.txt
+    && pip install --upgrade --no-cache-dir pip==24.0 \
+    && pip install --upgrade --no-cache-dir setuptools==69.1.0 \
+    && pip install --no-cache-dir -r requirements_py3.11_noconda.txt
 
 # Copy the source code
 COPY . /youtube_news
@@ -40,4 +39,3 @@ source /youtube_news/env/bin/activate\n\
 && chmod +x /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh" ]
 EXPOSE 8501
-

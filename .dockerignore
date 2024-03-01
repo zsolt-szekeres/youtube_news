@@ -29,3 +29,6 @@ README.md
 **/vector_store
 **/videos
 **/backup
+**/venv
+**/kubernetes
+**/dockerize

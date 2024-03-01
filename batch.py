@@ -44,6 +44,7 @@ if __name__ == "__main__":
                         logger.debug(f"Duration: {info['duration_string']}")
                         transcription = ws.transcribe(fname + "." + format)
                         ntokens = llms.get_num_tokens(transcription["text"])
+                        info["ntokens"] = ntokens
                         logger.debug(f"This has  {ntokens} tokens")
                         summary, chunk_size, overlap = llms.get_summary(
                             [transcription["text"]], ntokens
