@@ -28,7 +28,7 @@ COPY . /youtube_news
 VOLUME /data
 
 # Set the entrypoint: 
-# - copy the config.json from /etc/config/config.json to /youtube_news/config.json and 
+# - copy /etc/config/config.json to /youtube_news/config.json 
 # - create output folders
 # - activate the virtual environment
 RUN echo '#!/bin/bash\n\

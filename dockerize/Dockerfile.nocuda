@@ -1,25 +1,24 @@
-FROM nvidia/cuda:12.3.0-base-ubuntu22.04
+FROM python:3.11-slim
+
 
 # Install system dependencies
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         ffmpeg \
-        python3.11 \
-        python3.11-venv \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /youtube_news
 
 # Copy the requirements file
-COPY requirements_py3.11_noconda.txt requirements_py3.11_noconda.txt
+COPY requirements_py3.11_nocuda.txt requirements_py3.11_nocuda.txt
 
 # Create python virtual environment
 RUN python3.11 -m venv env \
     && . env/bin/activate \
     && pip install --upgrade --no-cache-dir pip==24.0 \
     && pip install --upgrade --no-cache-dir setuptools==69.1.0 \
-    && pip install --no-cache-dir -r requirements_py3.11_noconda.txt
+    && pip install --no-cache-dir -r requirements_py3.11_nocuda.txt
 
 # Copy the source code
 COPY . /youtube_news

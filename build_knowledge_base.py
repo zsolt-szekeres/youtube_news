@@ -10,7 +10,6 @@ import argparse
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings.openai import OpenAIEmbeddings
-import chromadb
 from langchain.vectorstores import Chroma
 
 import config

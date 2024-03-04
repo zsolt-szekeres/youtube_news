@@ -10,7 +10,6 @@ from langchain.schema import HumanMessage, SystemMessage
 
 # Note this: https://github.com/kyamagu/faiss-wheels/issues/39
 # from langchain.vectorstores import FAISS
-import chromadb
 from langchain_community.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
 

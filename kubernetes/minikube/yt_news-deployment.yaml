@@ -49,7 +49,8 @@ data:
       "log_folder": "/data/log",
       "videos_folder": "/data/videos",
       "backup_folder": "/data/backup",
-      "vector_store": "/data/vector_store"
+      "vector_store": "/data/vector_store",
+      "yt_transcript_api_enabled": true
     }
 kind: ConfigMap
 metadata:

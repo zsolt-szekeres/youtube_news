@@ -2,7 +2,7 @@ import logging
 import argparse
 
 import youtube_parser as yp
-import myshare
+import youtube_transcript as yt
 import speech2text as s2t
 import llms
 import content
@@ -38,7 +38,8 @@ if __name__ == "__main__":
     )
     logger = logging.getLogger()
 
-    ws = s2t.ws()  # initialize speech to text model
+    if not config.params["yt_transcript_api_enabled"]:
+        ws = s2t.ws()  # initialize speech to text model
 
     channel_ids = [args.channel_id]
     exception_list = ["dZWngkjrFxw"]  # videos that fail for some reason
@@ -49,10 +50,13 @@ if __name__ == "__main__":
             video_ids = [item for item in video_ids if item not in exception_list]
             for v in tqdm(video_ids):
                 logger.info(channel_id + " _ " + v)
+                do_skip_rest = False
                 try:
                     url = "https://www.youtube.com/watch?v=" + v
-                    fn, format, info = yp.get_video(url, format="mp3", download=False)
-                    if not os.path.exists(fn + "_transcript.json"):
+                    fname, format, info = yp.get_video(
+                        url, format="mp3", download=False
+                    )
+                    if not os.path.exists(fname + "_transcript.json"):
                         logger.debug(
                             "Recent="
                             + str(yp.is_recent(info["upload_date"], lookback=2530))
@@ -65,20 +69,39 @@ if __name__ == "__main__":
                                 + " | "
                                 + info["upload_date"]
                             )
-                            fname, format, info = yp.get_video(
-                                "https://www.youtube.com/watch?v=" + v, format="mp3"
-                            )
-                            logger.debug(f"Duration: {info['duration_string']}")
-                            transcription = ws.transcribe(fname + "." + format)
-                            ntokens = llms.get_num_tokens(transcription["text"])
-                            logger.debug(f"This has  {ntokens} tokens")
-                            info["ntokens"] = ntokens
-                            summary, chunk_size, overlap = llms.get_summary(
-                                [transcription["text"]], ntokens
-                            )
-                            # myshare.send_email(summary, info)
-                            logger.info("email sent")
-                            content.save_all(summary, transcription, info, fname)
+                            info["youtube_transcript_api_enabled"] = config.params[
+                                "yt_transcript_api_enabled"
+                            ]
+                            info["transcript_received"] = False
+                            if config.params["yt_transcript_api_enabled"]:
+                                logger.debug(
+                                    f"Youtube transcript API enabled. url: {url}, title: {info['title']}"
+                                )
+                                transcription = {}
+                                transcription["text"], _ = yt.get_transcript(
+                                    yt_link=url, do_assert=False
+                                )
+                                if transcription["text"] is None:
+                                    do_skip_rest = True
+                                    logger.debug(
+                                        f"No youtube transcript found for video url: {url}, title: {info['title']}"
+                                    )
+                                info["transcript_received"] = True
+                            else:
+                                fname, format, info = yp.get_video(url, format="mp3")
+                                logger.debug(f"Duration: {info['duration_string']}")
+                                transcription = ws.transcribe(fname + "." + format)
+
+                            if not do_skip_rest:
+                                ntokens = llms.get_num_tokens(transcription["text"])
+                                logger.debug(f"This has  {ntokens} tokens")
+                                info["ntokens"] = ntokens
+                                summary, chunk_size, overlap = llms.get_summary(
+                                    [transcription["text"]], ntokens
+                                )
+                                # myshare.send_email(summary, info)
+                                logger.info("email sent")
+                                content.save_all(summary, transcription, info, fname)
                         else:
                             break
                 except Exception as e:

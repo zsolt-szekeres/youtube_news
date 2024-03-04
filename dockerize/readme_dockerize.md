@@ -109,14 +109,14 @@ Wed Feb 21 16:04:26 2024
 ## Build image 
 For initial testing of Dockerfile. Do not publish these images because you expose your API keys.
 ```bash
-$ cd dockerize
 $ docker build \
   --build-arg YOUTUBE_API_KEY=${YOUTUBE_API_KEY} \
   --build-arg OPENAI_API_KEY=${OPENAI_API_KEY} \
   --build-arg GMAIL_TWOFACTOR=${GMAIL_TWOFACTOR} \
   --build-arg STREAMLIT_PORT=8884 \
   -t youtube_news:main \
-  .
+  . \
+  -f dockerize/Dockerfile.dev
 ```
 
 ## Run image in local environment

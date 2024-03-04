@@ -1,8 +1,8 @@
 **/__pycache__
-**/.venv
+**/.venv*
 **/.classpath
 **/.dockerignore
-**/.env
+**/.env*
 **/.git
 **/.gitignore
 **/.project
@@ -25,10 +25,12 @@
 **/values.dev.yaml
 LICENSE
 README.md
-**/env
+**/env*
 **/vector_store
 **/videos
 **/backup
-**/venv
+**/venv*
 **/kubernetes
 **/dockerize
+**/.my*
+**/__pycache__

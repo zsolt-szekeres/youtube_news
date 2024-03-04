@@ -1,6 +1,8 @@
-import whisper
-import torch
 import config
+
+if not config.params["yt_transcript_api_enabled"]:
+    import whisper
+    import torch
 
 
 class ws:
