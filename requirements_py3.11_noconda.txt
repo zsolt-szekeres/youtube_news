@@ -127,7 +127,7 @@ smmap==5.0.1
 sniffio==1.3.0
 SQLAlchemy==2.0.27
 starlette==0.36.3
-streamlit==1.31.1
+streamlit==1.32.0
 sympy==1.12
 tenacity==8.2.3
 tiktoken==0.6.0
@@ -157,5 +157,5 @@ whisper==1.1.10
 wrapt==1.16.0
 yarl==1.9.4
 youtube-transcript-api==0.6.2
-yt-dlp==2023.12.30
+yt-dlp==2024.3.10
 zipp==3.17.0

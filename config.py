@@ -60,6 +60,14 @@ class _ConfigParser:
     def yt_transcript_api_enabled(self):
         return self.data["yt_transcript_api_enabled"]
 
+    @property
+    def local_whisper_enabled(self):
+        return self.data["local_whisper_enabled"]
+
+    @property
+    def force_download_audio(self):
+        return self.data["force_download_audio"]
+
 
 _config_parser = _ConfigParser("config.json")
 params = {
@@ -75,4 +83,6 @@ params = {
     "backup_folder": _config_parser.backup_folder,
     "vector_store": _config_parser.vector_store,
     "yt_transcript_api_enabled": _config_parser.yt_transcript_api_enabled,
+    "local_whisper_enabled": _config_parser.local_whisper_enabled,
+    "force_download_audio": _config_parser.force_download_audio,
 }

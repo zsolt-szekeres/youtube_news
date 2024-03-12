@@ -35,5 +35,7 @@
     "videos_folder": "./videos",
     "backup_folder": "g:/whatever",
     "vector_store": "c:/whatever",
-    "yt_transcript_api_enabled": true
+    "yt_transcript_api_enabled": true,
+    "local_whisper_enabled": false,
+    "force_download_audio": false
 }

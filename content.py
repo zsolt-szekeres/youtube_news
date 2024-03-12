@@ -22,8 +22,8 @@ def save_all(summary, transcription, info, fname, local_config=None, cloud=None)
     """
     Save summary, transcription, info and filename to a dedicated folder
     """
-    folder = str.split(fname, os.sep)[0] + os.sep + str.split(fname, os.sep)[1]
-    name = str.split(fname, os.sep)[2]
+    folder = fname
+    name = str.split(fname, os.sep)[-1]
     subfolders = get_subfolders(folder)
     subfolders_int = list(map(int, subfolders))
     max_int = max(subfolders_int) if subfolders_int else 0

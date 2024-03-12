@@ -38,10 +38,20 @@ if __name__ == "__main__":
     )
     logger = logging.getLogger()
 
-    if not config.params["yt_transcript_api_enabled"]:
+    if config.params["local_whisper_enabled"]:
         ws = s2t.ws()  # initialize speech to text model
 
     channel_ids = [args.channel_id]
+    # channel_ids = [
+    #     "UCAuUUnT6oDeKwE6v1NGQxug",
+    #     "UCNJ1Ymd5yFuUPtn21xtRbbw",
+    #     "UCSHZKyawb77ixDdsGog4iWA",
+    #     "UCwD5YYkbYmN2iFHON9FyDXg",
+    #     "UC2D2CMWXMOVWx7giW1n3LIg",
+    #     "UCyR2Ct3pDOeZSRyZH5hPO-Q",
+    #     "UCvKRFNawVcuz4b9ihUTApCg",
+    #     "UCK7tJXHCdxWpA4Q5349wfkw",
+    # ]
     exception_list = ["dZWngkjrFxw"]  # videos that fail for some reason
 
     for channel_id in channel_ids:
@@ -50,11 +60,13 @@ if __name__ == "__main__":
             video_ids = [item for item in video_ids if item not in exception_list]
             for v in tqdm(video_ids):
                 logger.info(channel_id + " _ " + v)
-                do_skip_rest = False
+                transcript_ready = False
                 try:
                     url = "https://www.youtube.com/watch?v=" + v
                     fname, format, info = yp.get_video(
-                        url, format="mp3", download=False
+                        url,
+                        format="mp3",
+                        download=config.params["force_download_audio"],
                     )
                     if not os.path.exists(fname + "_transcript.json"):
                         logger.debug(
@@ -73,26 +85,30 @@ if __name__ == "__main__":
                                 "yt_transcript_api_enabled"
                             ]
                             info["transcript_received"] = False
+                            info["lang_code"] = None
                             if config.params["yt_transcript_api_enabled"]:
                                 logger.debug(
                                     f"Youtube transcript API enabled. url: {url}, title: {info['title']}"
                                 )
                                 transcription = {}
-                                transcription["text"], _ = yt.get_transcript(
-                                    yt_link=url, do_assert=False
+                                transcription["text"], info["lang_code"] = (
+                                    yt.get_transcript(url)
                                 )
-                                if transcription["text"] is None:
-                                    do_skip_rest = True
-                                    logger.debug(
-                                        f"No youtube transcript found for video url: {url}, title: {info['title']}"
+                                if transcription["text"] is not None:
+                                    transcript_ready = True
+                                info["transcript_received"] = transcript_ready
+                            if (
+                                config.params["local_whisper_enabled"]
+                                and not transcript_ready
+                            ):
+                                if not config.params["force_download_audio"]:
+                                    fname, format, info = yp.get_video(
+                                        url, format="mp3"
                                     )
-                                info["transcript_received"] = True
-                            else:
-                                fname, format, info = yp.get_video(url, format="mp3")
                                 logger.debug(f"Duration: {info['duration_string']}")
                                 transcription = ws.transcribe(fname + "." + format)
-
-                            if not do_skip_rest:
+                                transcript_ready = True
+                            if transcript_ready:
                                 ntokens = llms.get_num_tokens(transcription["text"])
                                 logger.debug(f"This has  {ntokens} tokens")
                                 info["ntokens"] = ntokens
@@ -100,7 +116,7 @@ if __name__ == "__main__":
                                     [transcription["text"]], ntokens
                                 )
                                 # myshare.send_email(summary, info)
-                                logger.info("email sent")
+                                # logger.info("email sent")
                                 content.save_all(summary, transcription, info, fname)
                         else:
                             break

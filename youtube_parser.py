@@ -1,3 +1,4 @@
+import os
 import yt_dlp
 import config
 from datetime import datetime, timedelta
@@ -18,7 +19,9 @@ def get_video(url, format="mp3", download=True):
 
     ytdl_opts = {
         "format": "bestaudio",
-        "outtmpl": "videos/%(title)s/%(title)s.%(ext)s",
+        "outtmpl": os.path.join(
+            config.params["videos_folder"], "%(title)s/%(title)s.%(ext)s"
+        ),
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",

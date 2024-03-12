@@ -152,6 +152,6 @@ def get_summary(text, ntokens, local_config=None):
             # verbose=True
         )
 
-    summary = summary_chain.run(docs)
+    summary = summary_chain.invoke(docs)
 
     return (summary, chunk_size, overlap)

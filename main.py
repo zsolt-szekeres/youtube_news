@@ -16,10 +16,8 @@ import os
 
 
 if __name__ == "__main__":
-    do_skip_rest = False
+    transcript_ready = False
     media_downloader = MediaDownloader(config)
-    st.markdown("*Loading speech-to-text model...*")
-    ws = s2t.ws()
 
     with st.sidebar:
         st.header("Configuration")
@@ -52,40 +50,58 @@ if __name__ == "__main__":
         )
         email_send = st.checkbox("Send me an email with the summary")
         debug_mode = st.checkbox("Debug mode")
+        yt_transcript_api_enabled = st.checkbox(
+            "Use youtube transcript API",
+            value=config.params["yt_transcript_api_enabled"],
+        )
+        local_whisper_enabled = st.checkbox(
+            "Use local whisper", value=config.params["local_whisper_enabled"]
+        )
+        if local_whisper_enabled:
+            st.markdown("*Speech-to-text model loaded*")
+            ws = s2t.ws()
+        else:
+            st.markdown("*Speech-to-text model not loaded*")
+            s2t.ws.delete()
 
     button1 = st.button("Get input and summarize")
 
     if button1:
 
         if yt_link:
-            if config.params["yt_transcript_api_enabled"]:
+            if yt_transcript_api_enabled:
                 transcription = {}
-                transcription["text"], _ = yt.get_transcript(
-                    yt_link=yt_link, do_assert=True
-                )
-                if transcription["text"] is None:
-                    st.write("No transcript found")
-                    do_skip_rest = True
+                transcription["text"], lang_code = yt.get_transcript(yt_link=yt_link)
+                if transcription["text"] is not None:
+                    st.write(f"Transcript language code: '{lang_code}'")
+                    transcript_ready = True
 
-                if not do_skip_rest:
+                if transcript_ready:
                     start = time.time()
-                    fname, format, info = yp.get_video(yt_link, download=False)
+                    fname, format, info = yp.get_video(
+                        yt_link, download=config.params["force_download_audio"]
+                    )
                     end = time.time()
 
                     st.write(
-                        f'Downloaded youtube transcript of {fname+"."+format} in  {round((end - start) / 60, 2)}  mins'
+                        f'Downloaded youtube transcript of {os.path.basename(fname)+"."+format} in  {round((end - start) / 60, 2)}  mins'
                     )
                     st.write(f"Duration: {info['duration_string']}")
                     st.image(info["thumbnail"])
-            else:
-                start = time.time()
-                fname, format, info = yp.get_video(yt_link)
-                # fname, format, info = media_downloader._get_audio_from_youtube(yt_link)
-                end = time.time()
 
-                st.write(
-                    f'Downloaded {fname+"."+format} in  {round((end - start) / 60, 2)}  mins'
-                )
+            if local_whisper_enabled and not transcript_ready:
+                if yt_transcript_api_enabled:
+                    st.write(
+                        "No previously generated transcript found.\nUse local whisper model for speech-to-text..."
+                    )
+                if not config.params["force_download_audio"]:
+                    start = time.time()
+                    fname, format, info = yp.get_video(yt_link)
+                    # fname, format, info = media_downloader._get_audio_from_youtube(yt_link)
+                    end = time.time()
+                    st.write(
+                        f'Downloaded {os.path.basename(fname)+"."+format} in  {round((end - start) / 60, 2)}  mins'
+                    )
                 st.write(f"Duration: {info['duration_string']}")
                 st.image(info["thumbnail"])
 
@@ -95,6 +111,7 @@ if __name__ == "__main__":
                 transcription = ws.transcribe(fname + "." + format)
                 end = time.time()
                 st.write(f"Transcribed in  {round((end - start) / 60, 2)}  mins")
+                transcript_ready = True
         else:
             transcription, info = content.get_transcript(cache_folder)
             fname = (
@@ -104,7 +121,8 @@ if __name__ == "__main__":
                 + os.sep
                 + str.split(cache_folder, os.sep)[4]
             )
-        if not do_skip_rest:
+            transcript_ready = True
+        if transcript_ready:
             if debug_mode:
                 config.params["email"]["receiver_emails"] = [
                     config.params["email"]["sender_email"]
@@ -130,7 +148,8 @@ if __name__ == "__main__":
 
             content.save_all(summary, transcription, info, fname, local_config)
             if config.params["backup_folder"]:
-                os.chdir("videos")
-                folder = str.split(fname, os.sep)[1]
-                copy_tree(folder, config.params["backup_folder"] + os.sep + folder)
-                os.chdir("..")
+                folder = os.path.dirname(fname)
+                last_folder = str.split(folder, os.sep)[-1]
+                copy_tree(
+                    folder, os.path.join(config.params["backup_folder"], last_folder)
+                )
