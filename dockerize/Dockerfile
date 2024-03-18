@@ -8,11 +8,35 @@ RUN apt-get update \
         python3.11-venv \
     && rm -rf /var/lib/apt/lists/*
 
+ARG USERNAME=app
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+# Create the user
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+    #
+    # [Optional] Add sudo support. Omit if you don't need to install software after connecting.
+    # && apt-get update \
+    # && apt-get install -y sudo \
+    # && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    # && chmod 0440 /etc/sudoers.d/$USERNAME
+
+# ********************************************************
+# * Anything else you want to do like clean up goes here *
+# ********************************************************
+
+# Create the working directory with user permissions
+RUN mkdir /app && chown $USERNAME:$USERNAME /app
+
+# [Optional] Set the default user. Omit if you want to keep the default as root.
+USER $USERNAME
+
 # Set the working directory
-WORKDIR /youtube_news
+WORKDIR /app
 
 # Copy the requirements file
-COPY requirements_py3.11_noconda.txt requirements_py3.11_noconda.txt
+COPY --chown=$USERNAME:$USERNAME requirements_py3.11_noconda.txt requirements_py3.11_noconda.txt
 
 # Create python virtual environment
 RUN python3.11 -m venv env \
@@ -22,19 +46,17 @@ RUN python3.11 -m venv env \
     && pip install --no-cache-dir -r requirements_py3.11_noconda.txt
 
 # Copy the source code
-COPY . /youtube_news
+COPY --chown=$USERNAME:$USERNAME . .
 
 # persist the output data
 VOLUME /data
 
 # Set the entrypoint: 
-# - copy $CONFIG_JSON env var to /youtube_news/config.json
 # - create output folders
 # - activate the virtual environment
 RUN echo '#!/bin/bash\n\
-echo $CONFIG_JSON > /youtube_news/config.json\n\
 mkdir -p /data/log /data/videos /data/backup /data/vector_store\n\
-source /youtube_news/env/bin/activate\n\
-"$@"' > /entrypoint.sh \
-&& chmod +x /entrypoint.sh
-ENTRYPOINT [ "/entrypoint.sh" ]
+source /app/env/bin/activate\n\
+"$@"' > /app/entrypoint.sh \
+&& chmod +x entrypoint.sh
+ENTRYPOINT [ "/app/entrypoint.sh" ]

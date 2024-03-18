@@ -8,8 +8,7 @@
 **/.project
 **/.settings
 **/.toolstarget
-**/.vs
-**/.vscode
+**/.vs*
 **/*.*proj.user
 **/*.dbmdl
 **/*.jfm
@@ -34,3 +33,4 @@ README.md
 **/dockerize
 **/.my*
 **/__pycache__
+**/*config.json*

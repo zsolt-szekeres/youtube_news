@@ -66,7 +66,7 @@ if __name__ == "__main__":
                     fname, format, info = yp.get_video(
                         url,
                         format="mp3",
-                        download=config.params["force_download_audio"],
+                        download=False,
                     )
                     if not os.path.exists(fname + "_transcript.json"):
                         logger.debug(
@@ -96,15 +96,16 @@ if __name__ == "__main__":
                                 )
                                 if transcription["text"] is not None:
                                     transcript_ready = True
+                                    if config.params["force_download_audio"]:
+                                        fname, format, _ = yp.get_video(
+                                            url, format="mp3"
+                                        )
                                 info["transcript_received"] = transcript_ready
                             if (
                                 config.params["local_whisper_enabled"]
                                 and not transcript_ready
                             ):
-                                if not config.params["force_download_audio"]:
-                                    fname, format, info = yp.get_video(
-                                        url, format="mp3"
-                                    )
+                                fname, format, _ = yp.get_video(url, format="mp3")
                                 logger.debug(f"Duration: {info['duration_string']}")
                                 transcription = ws.transcribe(fname + "." + format)
                                 transcript_ready = True

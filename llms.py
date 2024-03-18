@@ -154,4 +154,4 @@ def get_summary(text, ntokens, local_config=None):
 
     summary = summary_chain.invoke(docs)
 
-    return (summary, chunk_size, overlap)
+    return (summary["output_text"], chunk_size, overlap)
