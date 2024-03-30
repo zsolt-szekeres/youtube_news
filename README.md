@@ -218,8 +218,13 @@ Don't forget to restart bash, e.g., close and open the terminal.
         "sender_email": "youremail@com",
         "receiver_emails":  ["email1@gmail.com","email2@gmail.com"]
     },
+    "log_folder": "g:/whatever/log",
+    "videos_folder": "./videos",
     "backup_folder": "g:/whatever",
-    "vector_store": "c:/whatever"
+    "vector_store": "c:/whatever",
+    "yt_transcript_api_enabled": true,
+    "local_whisper_enabled": false,
+    "force_download_audio": false
 ...
 ```
 6. Run one of the entrypoints, e.g main.py
